@@ -236,5 +236,24 @@ namespace ExtendNetease_DGJModule
             }
             return lyric;
         }
+
+
+
+        public override void SongDownloadFail(string songid,Exception ex)
+        {
+            if ((ex as System.Net.WebException)?.Status != WebExceptionStatus.Success)
+            {
+                if (long.TryParse(songid, out long sid))
+                {
+                    Quality quality = _config.Config?.Quality ?? Quality.HighQuality;
+                    Tuple<long, Quality> key = new Tuple<long, Quality>(sid, quality);
+                    if (_downloadCache.ContainsKey(key))
+                    {
+                        _downloadCache.Remove(key);
+                    }
+                }
+            }
+        }
     }
+
 }
