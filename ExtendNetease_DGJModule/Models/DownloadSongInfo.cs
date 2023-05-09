@@ -1,5 +1,8 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Windows.Navigation;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace ExtendNetease_DGJModule.Models
 {
@@ -17,7 +20,7 @@ namespace ExtendNetease_DGJModule.Models
 
         public DateTime ExpireTime { get; }
 
-        public DownloadSongInfo(long id, int bitrate, string url, string type)
+        public DownloadSongInfo(long id, int bitrate, string url, string type,int expi)
         {
             Id = id;
             Bitrate = bitrate;
@@ -43,12 +46,13 @@ namespace ExtendNetease_DGJModule.Models
             }
             Url = url;
             Type = type;
-            ExpireTime = DateTime.Now.AddMinutes(20);
+            ExpireTime = DateTime.Now.AddMinutes(expi/60);
         }
 
         public static DownloadSongInfo Parse(JToken node)
         {
-            return new DownloadSongInfo(node["id"].ToObject<long>(), node["br"].ToObject<int>(), node["url"].ToString(), node["type"].ToString());
+            return new DownloadSongInfo(node["id"].ToObject<long>(), node["br"].ToObject<int>(), node["url"].ToString(), node["type"].ToString(), node["expi"].ToObject<int>());
+
         }
     }
 }

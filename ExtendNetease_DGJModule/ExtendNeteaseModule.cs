@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using DGJSongInfo = DGJv3.SongInfo;
 using SongInfo = ExtendNetease_DGJModule.Models.SongInfo;
@@ -67,7 +68,18 @@ namespace ExtendNetease_DGJModule
                 {
                     Quality quality = _config.Config?.Quality ?? Quality.HighQuality;
                     Tuple<long, Quality> key = new Tuple<long, Quality>(songId, quality);
-                    if (!_downloadCache.TryGetValue(key, out DownloadSongInfo downloadInfo))
+                    var existsSong = _downloadCache.TryGetValue(key, out DownloadSongInfo downloadInfo);
+                    if (existsSong && downloadInfo?.ExpireTime < DateTime.Now.AddSeconds(-3))
+                    {
+                        //移除过期缓存
+                        if (_downloadCache.ContainsKey(key))
+                        {
+                            Log("歌曲" + songInfo.SongName + " 下载连接过期，从缓存中移除");
+                            _downloadCache.Remove(key);
+                            existsSong = false;
+                        }
+                    }
+                    if (!existsSong)
                     {
                         DownloadSongInfo[] songs = Task.Factory.StartNew(() => NeteaseMusicApis.GetSongsUrlAsync(_client, new long[1] { songId }, quality).ConfigureAwait(false).GetAwaiter().GetResult()).GetAwaiter().GetResult();
                         if (songs.Length != 0)
