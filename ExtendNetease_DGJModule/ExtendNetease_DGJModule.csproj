@@ -106,6 +106,7 @@
     <Compile Include="Apis\NeteaseMusicApisGetPlayerUrlResponse.cs" />
     <Compile Include="Apis\NeteaseMusicApis.GetPlayList.cs" />
     <Compile Include="Apis\NeteaseMusicApis.GetSongsUrl.cs" />
+    <Compile Include="BuildInfo.cs" />
     <Compile Include="Clients\HttpClientv2.cs" />
     <Compile Include="CookieLoginWindow.xaml.cs">
       <DependentUpon>CookieLoginWindow.xaml</DependentUpon>
@@ -187,5 +188,14 @@
   <ItemGroup>
     <None Include="Reference\QRCoder.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="BuildInfo.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>cd $(ProjectDir)
+Powershell -Command "Write-Output (Get-Item -Path $(TargetPath)).VersionInfo.FileVersion | Out-File -FilePath $(SolutionDir)/VERSION"
+
+PowerShell -ExecutionPolicy Bypass -File $(SolutionDir)CI\patch_buildinfo.ps1</PreBuildEvent>
+  </PropertyGroup>
 </Project>
