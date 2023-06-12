@@ -36,6 +36,7 @@ jobs:
                 $version = Get-Content -Path VERSION -Raw
           } catch {
               $version = ""
+              echo "⭐请设置VERSION文件"
           }
           $version = $version.Trim()
           Write-Host "Version: $version"
@@ -64,7 +65,12 @@ jobs:
       - name: Set APPVEYOR_BUILD_VERSION environ
         if: ${{ steps.check_release.outputs.release_exists == 'false' }}
         run: |
-          echo "APPVEYOR_BUILD_VERSION=$(cat ./VERSION)" >> $env:GITHUB_ENV
+          try{
+                echo "APPVEYOR_BUILD_VERSION=$(cat ./VERSION)" >> $env:GITHUB_ENV
+          catch{
+                "APPVEYOR_BUILD_VERSION=" >> $env:GITHUB_ENV
+                echo "⭐请设置VERSION文件"
+          }
           echo $env:APPVEYOR_BUILD_VERSION
 
       - name: Use APPVEYOR_BUILD_VERSION environ
@@ -111,7 +117,12 @@ jobs:
         id: get_update_description
         if: ${{ steps.check_release.outputs.release_exists == 'false' }}
         run: |
-          $desc=$(cat ./update_description.md)
+          try{
+                $desc=$(cat ./update_description.md)
+          }catch{
+                $desc=“”
+                echo "⭐请设置update_description.md文件"
+          }
           echo "::set-output name=update_description::$desc"
 
 
