@@ -32,8 +32,6 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          echo "打印token"
-          echo ${{secrets.GITHUB_TOKEN}}
           try {
                 $version = Get-Content -Path VERSION -Raw
           } catch {
