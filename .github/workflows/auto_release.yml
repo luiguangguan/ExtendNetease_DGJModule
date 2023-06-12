@@ -32,7 +32,11 @@ jobs:
       - name: Get version
         id: get_version
         run: |
-          $version = Get-Content -Path VERSION -Raw
+          try {
+                $version = Get-Content -Path VERSION -Raw
+          } catch {
+              $version = ""
+          }
           $version = $version.Trim()
           Write-Host "Version: $version"
           Write-Host "::set-output name=version::$version"
