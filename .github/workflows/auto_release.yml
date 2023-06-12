@@ -67,6 +67,7 @@ jobs:
         run: |
           try{
                 echo "APPVEYOR_BUILD_VERSION=$(cat ./VERSION)" >> $env:GITHUB_ENV
+          }
           catch{
                 "APPVEYOR_BUILD_VERSION=" >> $env:GITHUB_ENV
                 echo "⭐请设置VERSION文件"
