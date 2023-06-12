@@ -119,6 +119,7 @@ jobs:
         run: |
           try{
                 $desc=$(cat ./update_description.md)
+          }
           }catch{
                 $desc=“”
                 echo "⭐请设置update_description.md文件"
