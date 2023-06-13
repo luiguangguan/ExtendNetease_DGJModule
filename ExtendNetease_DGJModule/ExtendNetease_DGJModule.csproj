@@ -161,6 +161,7 @@
     <Compile Include="Services\VersionService.cs" />
     <Compile Include="Models\SongInfo.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="VersionChecker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

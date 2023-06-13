@@ -6,6 +6,7 @@ using ExtendNetease_DGJModule.NeteaseMusic.Services;
 using ExtendNetease_DGJModule.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -26,13 +27,17 @@ namespace ExtendNetease_DGJModule
 
         private MainWindow _mainWindow;
 
+        private VersionChecker versionChecker;
+
+        public string DownloadUpdateUrl = "";
+
         public PluginMain()
         {
             this.PluginName = "本地网易云喵块";
             this.PluginAuth = "西井丶";
             this.PluginCont = "847529602@qq.com";
             this.PluginDesc = "可以添加歌单和登录网易云喵~";
-            this.PluginVer = Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
+            this.PluginVer = Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
             _client = new HttpClientv2();
             _client.DefaultRequestHeaders.Accept.ParseAdd("*/*");
             _client.DefaultRequestHeaders.UserAgent.ParseAdd($"DGJModule.NeteaseMusicApi/{this.PluginVer} .NET CLR v4.0.30319");
@@ -40,6 +45,39 @@ namespace ExtendNetease_DGJModule
             _session = new NeteaseSession(_config, _client);
             _dependencyExtractor = new DependencyExtractor();
             base.Start();
+
+            versionChecker = new VersionChecker("ExtendNetease_DGJModule");
+            Task.Run(() =>
+            {
+                if (versionChecker.FetchInfoFromGithub())
+                {
+                    Version current = null;
+
+                    try
+                    {
+                        current = new Version(Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
+                    if (versionChecker.HasNewVersion(current))
+                    {
+                        Log("插件有新版本" + Environment.NewLine +
+                            $"当前版本：{BuildInfo.Version}" + Environment.NewLine +
+                            $"最新版本：{versionChecker.Version.ToString()} 更新时间：{versionChecker.UpdateDateTime.ToShortDateString()}" + Environment.NewLine +
+                            $"更新包下载地址： ↘↘↘↘↘");
+                        Log(versionChecker.DownloadUrl.AbsoluteUri);
+                        Log(versionChecker.UpdateDescription);
+                        DownloadUpdateUrl = versionChecker.DownloadUrl.AbsoluteUri;
+                    }
+                }
+                else
+                {
+                    Log("版本检查出错：" + versionChecker?.LastException?.Message);
+                }
+            });
         }
 
         public override void Inited()
@@ -116,9 +154,19 @@ namespace ExtendNetease_DGJModule
 
         public override void Admin()
         {
+            _mainWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             _mainWindow.Show();
             _mainWindow.Topmost = true;
             _mainWindow.Topmost = false;
+            _mainWindow.Activate();
+            if (string.IsNullOrEmpty(DownloadUpdateUrl) == false)
+            {
+                if (MessageBox.Show("网易云喵块发现新版本，是否前往下载", "版本更新", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                {
+                    Process.Start(versionChecker.UpdatePage.AbsoluteUri);
+                }
+                DownloadUpdateUrl = "";
+            }
         }
 
         public override void Start()

@@ -1,11 +1,14 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Net;
+using System.Net.Http;
 
 namespace ExtendNetease_DGJModule
 {
-    internal class VersionChecker
+    public class VersionChecker
     {
         #region -- 常量 --
 
@@ -13,6 +16,8 @@ namespace ExtendNetease_DGJModule
         /// 默认服务器地址
         /// </summary>
         public const string DEFAULT_BASE_URL = "https://www.danmuji.org";
+        public const string GITHUB_owner = "luiguangguan";
+        public const string GITHUB_repo = "ExtendNetease_DGJModule";
 
         /// <summary>
         /// API的路径
@@ -32,7 +37,7 @@ namespace ExtendNetease_DGJModule
         /// <summary>
         /// 最后一个出错的Exception
         /// </summary>
-        public Exception lastException { get; private set; } = null;
+        public Exception LastException { get; private set; } = null;
 
         /// <summary>
         /// 插件ID
@@ -43,6 +48,11 @@ namespace ExtendNetease_DGJModule
         /// API返回的插件名字
         /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// 更新文件的名称
+        /// </summary>
+        public string UpdateFileName { get; set; }
 
         /// <summary>
         /// API返回的插件作者
@@ -73,6 +83,12 @@ namespace ExtendNetease_DGJModule
         /// API返回的下载地址
         /// </summary>
         public Uri DownloadUrl { get; private set; }
+
+        /// <summary>
+        /// 更新下载页面地址
+        /// </summary>
+        public Uri UpdatePage { get; private set; }
+
 
         /// <summary>
         /// 用户查看用的页面地址
@@ -121,7 +137,7 @@ namespace ExtendNetease_DGJModule
                 JObject j = JObject.Parse(json);
 
                 if (j["id"].ToString() != this.Id)
-                { lastException = new Exception("API返回ID不正确"); return false; }
+                { LastException = new Exception("API返回ID不正确"); return false; }
                 else
                 {
                     this.Name = j["name"].ToString();
@@ -141,8 +157,58 @@ namespace ExtendNetease_DGJModule
                 }
             }
             catch (Exception ex)
-            { lastException = ex; return false; }
+            { LastException = ex; return false; }
 
+        }
+
+        public bool FetchInfoFromGithub()
+        {
+            try
+            {
+
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36");
+
+                    string url = $"https://api.github.com/repos/{GITHUB_owner}/{GITHUB_repo}/releases/latest";
+                    HttpResponseMessage response = client.GetAsync(url).GetAwaiter().GetResult();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = response.Content.ReadAsStringAsync().Result;
+                        JObject release = JsonConvert.DeserializeObject<JObject>(responseContent);
+                        string releaseName = release.GetValue("name").Value<string>();
+                        this.Name = "点歌姬v3";
+                        this.Author = "Simon";
+                        this.Version = new Version(releaseName?.Replace("v", "")?.Replace("V", ""));
+                        this.UpdateDateTime = release.GetValue("created_at").Value<DateTime>().ToLocalTime();
+                        this.UpdateDescription = release.GetValue("body").Value<string>();
+                        this.DownloadNote = "";
+                        this.UpdatePage = new Uri(release.GetValue("html_url").Value<string>());
+
+                        var assets = release.GetValue("assets").Value<JArray>();
+                        if (assets != null)
+                        {
+                            foreach (var asset in assets)
+                            {
+                                if (asset.Value<string>("name") == $"ExtendNetease_DGJModule_{releaseName?.Replace("v", "")?.Replace("V", "")}.zip")
+                                {
+                                    this.DownloadUrl = new Uri(asset.Value<string>("browser_download_url"));
+                                    this.UpdateFileName = asset.Value<string>("name");
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            { LastException = ex; return false; }
         }
 
         /// <summary>
@@ -150,15 +216,15 @@ namespace ExtendNetease_DGJModule
         /// </summary>
         /// <param name="version">当前版本号</param>
         /// <returns>检查结果</returns>
-        public bool hasNewVersion(string version)
-        { return hasNewVersion(new Version(version)); }
+        public bool HasNewVersion(string version)
+        { return HasNewVersion(new Version(version)); }
 
         /// <summary>
         /// 检查是否具有更新的版本
         /// </summary>
         /// <param name="version">当前版本号</param>
         /// <returns>检查结果</returns>
-        public bool hasNewVersion(Version version)
+        public bool HasNewVersion(Version version)
         { return (version.CompareTo(this.Version) < 0); }
         // version对象比参数小（之前，older的版本）
 
