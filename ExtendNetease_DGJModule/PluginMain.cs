@@ -114,7 +114,7 @@ namespace ExtendNetease_DGJModule
             {
                 MessageBox.Show($"无法读取配置文件（/TДT)/\n{e}", "本地网易云喵块", 0, MessageBoxImage.Error);
             }
-            _ = new VersionService(this, _client).CheckAsync("ExtendNetease_DGJModule");
+            //_ = new VersionService(this, _client).CheckAsync("ExtendNetease_DGJModule");
             _ = InitializeWindow();
         }
 
