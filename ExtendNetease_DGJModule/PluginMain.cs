@@ -209,7 +209,6 @@ namespace ExtendNetease_DGJModule
                     module.SetLogHandler(logHandler);
                 }
                 searchModules2.Insert(2, module);
-                dgjPlugin.Inited();
             }
             catch (DllNotFoundException)
             {
