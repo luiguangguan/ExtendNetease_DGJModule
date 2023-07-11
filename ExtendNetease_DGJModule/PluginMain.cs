@@ -208,7 +208,17 @@ namespace ExtendNetease_DGJModule
                     Action<string> logHandler = (Action<string>)lwlModule.GetType().GetProperty("_log", BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance).GetValue(lwlModule);
                     module.SetLogHandler(logHandler);
                 }
-                searchModules2.Insert(2, module);
+                MethodInfo methodInfo= searchModules.GetType().GetMethod("AddModule", BindingFlags.Instance | BindingFlags.Public);
+                if (methodInfo != null)
+                {
+					//单线程加入插件模块
+                    methodInfo.Invoke(searchModules,new object[] { module });
+                }
+                else
+                {
+                    //兼容旧的方法
+                    searchModules2.Insert(2, module);
+                }
             }
             catch (DllNotFoundException)
             {
